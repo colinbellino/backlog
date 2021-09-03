@@ -11,8 +11,8 @@
     "kill": "npm run api:kill",
     "api:build": "tsc --project ./api/tsconfig.json",
     "api:build:watch": "npm run api:build -- --watch --preserveWatchOutput",
-    "api:start": "pm2 start --name api ./api/.dist/index.js",
-    "api:start:watch": "npm run api:start -- --watch",
+    "api:start": "pm2 start --name api ./api/.dist/index.js --time",
+    "api:start:watch": "npm run api:start -- --watch --ignore-watch='./src'",
     "api:stop": "pm2 stop api",
     "api:kill": "pm2 delete api"
   },
