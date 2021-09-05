@@ -9,6 +9,7 @@
     "logs": "pm2 logs",
     "monitor": "pm2 monit",
     "kill": "pm2 delete all",
+    "restart": "pm2 restart all",
     "api:build": "tsc --project ./api/tsconfig.json",
     "api:build:watch": "tsc --project ./api/tsconfig.json --watch --preserveWatchOutput",
     "api:stop": "pm2 stop api",
@@ -19,8 +20,14 @@
   },
   "dependencies": {
     "@types/node": "16.7.10",
+    "@types/ws": "7.4.7",
     "npm-run-all": "4.1.5",
     "pm2": "5.1.1",
-    "typescript": "4.4.2"
+    "typescript": "4.4.2",
+    "ws": "7.4.6"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.3",
+    "utf-8-validate": "^5.0.5"
   }
 }
