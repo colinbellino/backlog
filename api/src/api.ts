@@ -2,8 +2,8 @@ import * as http from "http";
 import * as WebSocket from "ws";
 
 const API_HOSTNAME = "127.0.0.1";
-const API_PORT = 3000;
-const WS_PORT = 3001;
+const API_PORT = 4000;
+const WS_PORT = 4001;
 
 const wss = new WebSocket.Server({ port: WS_PORT });
 

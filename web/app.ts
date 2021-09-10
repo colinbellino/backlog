@@ -18,7 +18,7 @@ const state = {
 };
 
 function createWS() {
-  const ws = new WebSocket("ws://localhost:3001");
+  const ws = new WebSocket("ws://localhost:3000/Mitchel");
 
   ws.onopen = function () {
     appendMessage("Connection opened.");
