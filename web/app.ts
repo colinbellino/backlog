@@ -17,6 +17,7 @@ type Game = {
 
 type AppStorage = {
   getTasks: () => Promise<Task[]>;
+  createTask: (data: { game_id: string }) => Promise<Task>;
   getGames: () => Promise<Game[]>;
 };
 
@@ -45,19 +46,25 @@ function createStorage(): AppStorage {
     { id: "DARK_SOULS", box_art: "2555200-dsclean.jpg" },
   ];
 
-  async function getTasks() {
+  const getTasks: AppStorage["getTasks"] = async function () {
     return tasks;
-  }
+  };
 
-  // function getTasks() {
-  //   return new Promise<Task[]>((resolve) => setTimeout(resolve, 1000, tasks));
-  // }
-
-  async function getGames() {
+  const getGames: AppStorage["getGames"] = async function () {
     return games;
-  }
+  };
 
-  return { getTasks, getGames };
+  const createTask: AppStorage["createTask"] = async function (data) {
+    // TODO: Implement this:
+    // - Generate a unique ID (do we want to keep a string ?)
+    // - Add task to list
+    // - Return it
+    const task = { ...data, status: Statuses.TODO, id: "" + Math.random() };
+    tasks.push(task);
+    return task;
+  };
+
+  return { getTasks, createTask, getGames };
 }
 
 const storage = createStorage();
@@ -92,7 +99,11 @@ async function bootstrapApp() {
   };
 
   // @ts-ignore
-  window.onpopstate = history.onpushstate = history.onreplacestate = onPushState;
+  window.onpopstate = onPushState;
+  // @ts-ignore
+  history.onpushstate = onPushState;
+  // @ts-ignore
+  history.onreplacestate = onPushState;
 
   renderPage(window.location.pathname);
 }
@@ -117,8 +128,10 @@ function renderPage(pathname: string) {
       // Render empty form
       // - Input title
       // - Click submit -> Navigate to /tasks
-      document.title = "New task";
-      root.innerHTML = "/tasks/new";
+      renderLoading();
+      storage.getGames()
+        .then((games) => renderTaskForm(games))
+        .catch(renderError);
       return;
     }
     case "/tasks/:id": {
@@ -137,10 +150,6 @@ function renderPage(pathname: string) {
   }
 }
 
-function redirect(url: string) {
-  history.pushState({}, "", url);
-  // bootstrapApp();
-}
 
 function renderLoading() {
   root.innerHTML = "Loading...";
@@ -151,11 +160,27 @@ function renderError(error: Error) {
 }
 
 function onLinkClick(this: HTMLAnchorElement, event: MouseEvent) {
-  redirect(this.getAttribute("href")!);
+  history.pushState({}, "", this.getAttribute("href")!);
   event.preventDefault();
 }
 
-function renderTasksList(tasks: Task[], games: Game[]) {
+function onNewTaskFormSubmit(this: HTMLFormElement, event: Event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const formData = new FormData(this);
+  const data = {
+    game_id: formData.get("game_id") as string,
+  };
+
+  storage.createTask(data)
+    .then(_task => { history.pushState({}, "", "/tasks") })
+    .catch(renderError);
+}
+
+function renderTasksList(tasks: Task[], games: Game[]): void {
+  document.title = "Tasks";
+
   const list = tasks
     .map((task) => {
       // TODO: handle missing game
@@ -176,10 +201,30 @@ function renderTasksList(tasks: Task[], games: Game[]) {
     <ul>${list}</ul>
   `;
 
-  document.title = "Tasks";
 
-  let link = document.querySelector("a")!;
+  const link = document.querySelector("a")!;
   link.addEventListener("click", onLinkClick);
+}
+
+function renderTaskForm(games: Game[]): void {
+  document.title = "New task";
+
+  const options = games
+    .map(game => `<option value="${game.id}">${game.id}</option>`)
+    .join("\n");
+  root.innerHTML = `
+    <div>
+      <h1>Create a new task</h1>
+      <form id="new_task_form">
+        <label for="game_id">Select a game</label>
+        <select name="game_id">${options}</select>
+        <input type="submit" value="Submit!" />
+      <form>
+    </div>
+  `;
+
+  const form = document.querySelector("#new_task_form")!;
+  form.addEventListener("submit", onNewTaskFormSubmit);
 }
 
 bootstrapApp();
