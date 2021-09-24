@@ -23,14 +23,19 @@ type AppStorage = {
 function createStorage(): AppStorage {
   const tasks: Task[] = [
     {
-      id: "hello-1",
+      id: "zelda_1",
       game_id: "ZELDA",
       status: Statuses.TODO,
     },
     {
-      id: "pouet-2",
+      id: "mario_1",
       game_id: "MARIO",
       status: Statuses.IN_PROGRESS,
+    },
+    {
+      id: "ds_1",
+      game_id: "DARK_SOULS",
+      status: Statuses.DONE,
     },
   ];
 
@@ -58,29 +63,83 @@ function createStorage(): AppStorage {
 const storage = createStorage();
 const root = document.querySelector("#app_root")!;
 
+function onPushState(data: any, title: string, url: string) {
+  // console.log(JSON.stringify({ pathname: document.location.pathname, data, title, url }, null, 2));
+  renderPage(url);
+}
+
 async function bootstrapApp() {
-  // Route: /games
-  // Fetch games list - OK
-  // Render games list -
-  // - Click game -> Navigate to /games/:id
-  // - Click delete game -> Delete game & render games list
-  // - Click add game -> Navigate to /games/new
-  renderLoading();
-  Promise.all([storage.getTasks(), storage.getGames()])
-    .then(([tasks, games]) => renderTasksList(tasks, games))
-    .catch(renderError);
+  const originalPushState = history.pushState;
+  history.pushState = function (data, title, url) {
+    // @ts-ignore
+    if (typeof history.onpushstate == "function") {
+      // @ts-ignore
+      history.onpushstate(data, title, url);
+    }
+    // @ts-ignore
+    return originalPushState.apply(history, arguments);
+  };
 
-  // Route: /games/new
-  // Render empty form
-  // - Input title
-  // - Click submit -> Navigate to /games
-  //
+  const originalReplaceState = history.replaceState;
+  history.replaceState = function (data, title, url) {
+    // @ts-ignore
+    if (typeof history.onreplacestate == "function") {
+      // @ts-ignore
+      history.onreplacestate(data, title, url);
+    }
+    // @ts-ignore
+    return originalReplaceState.apply(history, arguments);
+  };
 
-  // Route: /games/:id
-  // Fetch game data
-  // Render game infos
-  // - Click back -> Navigate to /games
-  //
+  // @ts-ignore
+  window.onpopstate = history.onpushstate = history.onreplacestate = onPushState;
+
+  renderPage(window.location.pathname);
+}
+
+function renderPage(pathname: string) {
+  switch (pathname) {
+    case "/tasks": {
+      // Route: /tasks
+      // Fetch games list - OK
+      // Render games list -
+      // - Click game -> Navigate to /tasks/:id
+      // - Click delete game -> Delete game & render games list
+      // - Click add game -> Navigate to /tasks/new
+      renderLoading();
+      Promise.all([storage.getTasks(), storage.getGames()])
+        .then(([tasks, games]) => renderTasksList(tasks, games))
+        .catch(renderError);
+      return;
+    }
+    case "/tasks/new": {
+      // Route: /tasks/new
+      // Render empty form
+      // - Input title
+      // - Click submit -> Navigate to /tasks
+      document.title = "New task";
+      root.innerHTML = "/tasks/new";
+      return;
+    }
+    case "/tasks/:id": {
+      // Route: /tasks/:id
+      // Fetch game data
+      // Render game infos
+      // - Click back -> Navigate to /tasks
+      document.title = "Task details";
+      root.innerHTML = "/tasks/:id";
+      return;
+    }
+    default: {
+      history.pushState({}, "", "/tasks");
+      return;
+    }
+  }
+}
+
+function redirect(url: string) {
+  history.pushState({}, "", url);
+  // bootstrapApp();
 }
 
 function renderLoading() {
@@ -89,6 +148,11 @@ function renderLoading() {
 
 function renderError(error: Error) {
   root.innerHTML = error.toString();
+}
+
+function onLinkClick(this: HTMLAnchorElement, event: MouseEvent) {
+  redirect(this.getAttribute("href")!);
+  event.preventDefault();
 }
 
 function renderTasksList(tasks: Task[], games: Game[]) {
@@ -107,7 +171,15 @@ function renderTasksList(tasks: Task[], games: Game[]) {
         </li>`;
     })
     .join("\n");
-  root.innerHTML = `<ul>${list}</ul>`;
+  root.innerHTML = `
+    <a href="/tasks/new">new</a>
+    <ul>${list}</ul>
+  `;
+
+  document.title = "Tasks";
+
+  let link = document.querySelector("a")!;
+  link.addEventListener("click", onLinkClick);
 }
 
 bootstrapApp();
