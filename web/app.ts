@@ -79,8 +79,8 @@ const storage = createStorage();
 const root = document.querySelector("#app_root")!;
 
 function onPushState(data: any, title: string, url: string) {
-  // console.log(JSON.stringify({ pathname: document.location.pathname, data, title, url }, null, 2));
-  renderPage(url);
+  // console.log(JSON.stringify({ pathname: document.location.pathname, url }, null, 2));
+  renderPage(url || document.location.pathname);
 }
 
 async function bootstrapApp() {
@@ -116,53 +116,46 @@ async function bootstrapApp() {
   renderPage(window.location.pathname);
 }
 
-function renderPage(pathname: string) {
+function renderPage(url: string) {
+  renderPageForUrl(url)
+    .then(() => {
+      const links = document.querySelectorAll("a")!;
+      links.forEach(link => {
+        link.addEventListener("click", onLinkClick);
+      });
+    })
+    .catch(renderError);
+}
 
-  if (/^\/tasks\/([0-9]+)$/.test(pathname)) {
-    const result = /^\/tasks\/([0-9]+)$/.exec(pathname);
+async function renderPageForUrl(url: string): Promise<void> {
+  if (/^\/tasks\/([0-9]+)$/.test(url)) {
+    const result = /^\/tasks\/([0-9]+)$/.exec(url);
     const id = Number.parseInt(result![1]!);
 
     renderLoading();
-    Promise.all([storage.getTask(id), storage.getGames()])
+    return Promise.all([storage.getTask(id), storage.getGames()])
       .then(([task, games]) => {
         if (task == null) {
-          renderError(new Error("Task not found"));
-          return;
+          return Promise.reject(new Error("Task not found"));
         }
         renderTaskDetails(task, games);
-      })
-      .catch(renderError);
-    return;
+        return;
+      });
   }
 
-  switch (pathname) {
+  switch (url) {
     case "/tasks": {
-      // Route: /tasks
-      // Fetch games list - OK
-      // Render games list -
-      // - Click game -> Navigate to /tasks/:id
-      // - Click delete game -> Delete game & render games list
-      // - Click add game -> Navigate to /tasks/new
       renderLoading();
-      Promise.all([storage.getTasks(), storage.getGames()])
+      return Promise.all([storage.getTasks(), storage.getGames()])
         .then(([tasks, games]) => renderTasksList(tasks, games))
-        .catch(renderError);
-      return;
     }
     case "/tasks/new": {
-      // Route: /tasks/new
-      // Render empty form
-      // - Input title
-      // - Click submit -> Navigate to /tasks
       renderLoading();
-      storage.getGames()
+      return storage.getGames()
         .then((games) => renderTaskForm(games))
-        .catch(renderError);
-      return;
     }
     default: {
       history.pushState({}, "", "/tasks");
-      return;
     }
   }
 }
@@ -189,9 +182,9 @@ function onNewTaskFormSubmit(this: HTMLFormElement, event: Event) {
     game_id: formData.get("game_id") as string,
   };
 
+  // TODO: Handle createTask errors (display errors to the user or something)
   storage.createTask(data)
-    .then(_task => { history.pushState({}, "", "/tasks") })
-    .catch(renderError);
+    .then(_task => { history.pushState({}, "", "/tasks") });
 }
 
 function renderTasksList(tasks: Task[], games: Game[]): void {
@@ -218,9 +211,6 @@ function renderTasksList(tasks: Task[], games: Game[]): void {
     <a href="/tasks/new">new</a>
     <ul>${list}</ul>
   `;
-
-  const link = document.querySelector("a")!;
-  link.addEventListener("click", onLinkClick);
 }
 
 function renderTaskForm(games: Game[]): void {
@@ -258,9 +248,6 @@ function renderTaskDetails(task: Task, games: Game[]) {
   `;
   root.innerHTML = `${details}
   <a href="/tasks">list</a>`;
-
-  const link = document.querySelector("a")!;
-  link.addEventListener("click", onLinkClick);
 }
 
 bootstrapApp();
