@@ -5,7 +5,7 @@ enum Statuses {
 }
 
 type Task = {
-  id: string;
+  id: number;
   game_id: string;
   status: Statuses;
 };
@@ -24,17 +24,17 @@ type AppStorage = {
 function createStorage(): AppStorage {
   const tasks: Task[] = [
     {
-      id: "zelda_1",
+      id: 1,
       game_id: "ZELDA",
       status: Statuses.TODO,
     },
     {
-      id: "mario_1",
+      id: 2,
       game_id: "MARIO",
       status: Statuses.IN_PROGRESS,
     },
     {
-      id: "ds_1",
+      id: 3,
       game_id: "DARK_SOULS",
       status: Statuses.DONE,
     },
@@ -55,11 +55,14 @@ function createStorage(): AppStorage {
   };
 
   const createTask: AppStorage["createTask"] = async function (data) {
-    // TODO: Implement this:
-    // - Generate a unique ID (do we want to keep a string ?)
-    // - Add task to list
-    // - Return it
-    const task = { ...data, status: Statuses.TODO, id: "" + Math.random() };
+    // Spec: create a sorted list of tasks, without modifying the existing
+    let id = 1;
+    if (tasks.length > 0) {
+      const sortedTasks = [...tasks].sort((a, b) => b.id - a.id);
+      id = sortedTasks[0]!.id + 1;
+    }
+
+    const task = { ...data, status: Statuses.TODO, id };
     tasks.push(task);
     return task;
   };
