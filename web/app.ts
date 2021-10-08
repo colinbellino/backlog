@@ -22,6 +22,12 @@ type AppStorage = {
   getGames: () => Promise<Game[]>;
 };
 
+const statuses = [
+  { id: 0, name: "IN_PROGRESS" },
+  { id: 1, name: "TODO" },
+  { id: 2, name: "DONE" },
+];
+
 function createStorage(): AppStorage {
   const tasks: Task[] = [
     {
@@ -187,6 +193,13 @@ function onNewTaskFormSubmit(this: HTMLFormElement, event: Event) {
     .then(_task => { history.pushState({}, "", "/tasks") });
 }
 
+function onEditTaskFormSubmit(this: HTMLFormElement, event: Event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  console.log("FIXME: Make it work! :'(");
+}
+
 function renderTasksList(tasks: Task[], games: Game[]): void {
   document.title = "Tasks";
 
@@ -238,6 +251,15 @@ function renderTaskDetails(task: Task, games: Game[]) {
   document.title = `Task details (${task.id})`;
 
   const game = games.find((game) => game.id === task.game_id)!;
+  const gameOptions = games
+    .map(game => `<option value="${game.id}" ${game.id === task.game_id ? "selected" : ""}>${game.id}</option>`)
+    .join("\n");
+  const statusOptions = statuses
+    .map((status) => {
+      return `<option value="${status.id}" ${status.id === task.status ? "selected" : ""}>${status.name}</option>`
+    })
+    .join("\n");
+
   const details = `
     <h3>${game.id}</h3>
     <div>
@@ -247,7 +269,19 @@ function renderTaskDetails(task: Task, games: Game[]) {
     </div>
   `;
   root.innerHTML = `${details}
-  <a href="/tasks">list</a>`;
+    <hr />
+    <form id="edit_task_form">
+      <label for="game_id">Select a game</label>
+      <select name="game_id">${gameOptions}</select>
+      <label for="status">Select a status</label>
+      <select name="status">${statusOptions}</select>
+      <input type="submit" value="Submit!" />
+    <form>
+    <hr />
+    <a href="/tasks">list</a>`;
+
+  const form = document.querySelector("#edit_task_form")!;
+  form.addEventListener("submit", onEditTaskFormSubmit);
 }
 
 bootstrapApp();
