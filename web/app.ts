@@ -17,6 +17,7 @@ type Game = {
 
 type AppStorage = {
   getTasks: () => Promise<Task[]>;
+  getTask: (taskId: Number) => Promise<Task | null>;
   createTask: (data: { game_id: string }) => Promise<Task>;
   getGames: () => Promise<Game[]>;
 };
@@ -50,6 +51,10 @@ function createStorage(): AppStorage {
     return tasks;
   };
 
+  const getTask: AppStorage["getTask"] = async function (taskId) {
+    return tasks.find(task => task.id === taskId) || null;
+  };
+
   const getGames: AppStorage["getGames"] = async function () {
     return games;
   };
@@ -67,7 +72,7 @@ function createStorage(): AppStorage {
     return task;
   };
 
-  return { getTasks, createTask, getGames };
+  return { getTasks, getTask, createTask, getGames };
 }
 
 const storage = createStorage();
@@ -112,6 +117,24 @@ async function bootstrapApp() {
 }
 
 function renderPage(pathname: string) {
+
+  if (/^\/tasks\/([0-9]+)$/.test(pathname)) {
+    const result = /^\/tasks\/([0-9]+)$/.exec(pathname);
+    const id = Number.parseInt(result![1]!);
+
+    renderLoading();
+    Promise.all([storage.getTask(id), storage.getGames()])
+      .then(([task, games]) => {
+        if (task == null) {
+          renderError(new Error("Task not found"));
+          return;
+        }
+        renderTaskDetails(task, games);
+      })
+      .catch(renderError);
+    return;
+  }
+
   switch (pathname) {
     case "/tasks": {
       // Route: /tasks
@@ -137,22 +160,12 @@ function renderPage(pathname: string) {
         .catch(renderError);
       return;
     }
-    case "/tasks/:id": {
-      // Route: /tasks/:id
-      // Fetch game data
-      // Render game infos
-      // - Click back -> Navigate to /tasks
-      document.title = "Task details";
-      root.innerHTML = "/tasks/:id";
-      return;
-    }
     default: {
       history.pushState({}, "", "/tasks");
       return;
     }
   }
 }
-
 
 function renderLoading() {
   root.innerHTML = "Loading...";
@@ -192,6 +205,8 @@ function renderTasksList(tasks: Task[], games: Game[]): void {
         <li>
           <h3>${game.id}</h3>
           <div>
+            <a href="/tasks/${task.id}">details</a>
+            <br />
             <img src="/public/${game.box_art}" width="100" /><br />
             id: ${task.id}<br/>
             status: ${Statuses[task.status]}
@@ -203,7 +218,6 @@ function renderTasksList(tasks: Task[], games: Game[]): void {
     <a href="/tasks/new">new</a>
     <ul>${list}</ul>
   `;
-
 
   const link = document.querySelector("a")!;
   link.addEventListener("click", onLinkClick);
@@ -228,6 +242,25 @@ function renderTaskForm(games: Game[]): void {
 
   const form = document.querySelector("#new_task_form")!;
   form.addEventListener("submit", onNewTaskFormSubmit);
+}
+
+function renderTaskDetails(task: Task, games: Game[]) {
+  document.title = `Task details (${task.id})`;
+
+  const game = games.find((game) => game.id === task.game_id)!;
+  const details = `
+    <h3>${game.id}</h3>
+    <div>
+      <img src="/public/${game.box_art}" width="100" /><br />
+      id: ${task.id}<br/>
+      status: ${Statuses[task.status]}
+    </div>
+  `;
+  root.innerHTML = `${details}
+  <a href="/tasks">list</a>`;
+
+  const link = document.querySelector("a")!;
+  link.addEventListener("click", onLinkClick);
 }
 
 bootstrapApp();
