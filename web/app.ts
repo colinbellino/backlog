@@ -21,6 +21,7 @@ type AppStorage = {
   getTask: (taskId: number) => Promise<Task | null>;
   createTask: (data: Pick<Task, "gameId">) => Promise<Task>;
   updateTask: (taskId: number, data: Partial<Task>) => Promise<Task>;
+  deleteTask: (taskId: number) => Promise<void>;
   getGames: () => Promise<Game[]>;
 };
 
@@ -92,11 +93,17 @@ function createStorage(): AppStorage {
     return tasks[taskIndex]!;
   };
 
-  return { getTasks, getTask, createTask, updateTask, getGames };
-}
+  const deleteTask: AppStorage["deleteTask"] = async function (taskId) {
+    const taskIndex = tasks.findIndex(task => task.id === taskId);
+    if (taskIndex == -1) {
+      throw Error("Task not found: " + taskId);
+    }
 
-const storage = createStorage();
-const root = document.querySelector("#app_root")!;
+    tasks.splice(taskIndex, 1);
+  };
+
+  return { getTasks, getTask, createTask, updateTask, deleteTask, getGames };
+}
 
 function onPushState(data: any, title: string, url: string) {
   // console.log(JSON.stringify({ pathname: document.location.pathname, url }, null, 2));
@@ -230,6 +237,16 @@ function onEditTaskFormSubmit(task: Task) {
   }
 }
 
+function onDeleteTaskFormSubmit(task: Task) {
+  return function listener(this: HTMLFormElement, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    storage.deleteTask(task.id)
+      .then(() => { history.pushState({}, "", "/tasks") });
+  }
+}
+
 function renderTasksListPage(tasks: Task[], games: Game[]): void {
   document.title = "Tasks";
 
@@ -253,7 +270,7 @@ function renderTasksListPage(tasks: Task[], games: Game[]): void {
     })
     .join("\n");
   root.innerHTML = `
-    <a href="/tasks/new">new</a>
+    <a href="/tasks/new">New task</a>
     <ul>${list}</ul>
   `;
 }
@@ -265,12 +282,14 @@ function renderNewTaskPage(games: Game[]): void {
     .map(game => `<option value="${game.id}">${game.name}</option>`)
     .join("\n");
   root.innerHTML = `
+    <a href="/tasks">Back to list</a>
+    <hr />
     <div>
       <h1>Create a new task</h1>
       <form id="new_task_form">
         <label for="gameId">Select a game</label>
         <select name="gameId">${options}</select>
-        <input type="submit" value="Submit!" />
+        <input type="submit" value="Create" />
       <form>
     </div>
   `;
@@ -292,29 +311,37 @@ function renderTaskDetailsPage(task: Task, games: Game[]) {
     })
     .join("\n");
 
-  const details = `
+  root.innerHTML = `
+    <a href="/tasks">Back to list</a>
+    <hr />
     <h3>Task ${task.id}</h3>
     <div>
-      <img src="/public/${game.boxArt}" width="100" /><br />
-      gameId: ${game.name} (${game.id})<br/>
+      <img src="/public/${game.boxArt}" width="100" />
+      <br />
+      gameId: ${game.name} (${game.id})
+      <br/>
       status: ${Statuses[task.status]}
     </div>
-  `;
-  root.innerHTML = `${details}
     <hr />
     <form id="edit_task_form">
       <label for="gameId">Select a game</label>
       <select name="gameId">${gameOptions}</select>
       <label for="status">Select a status</label>
       <select name="status">${statusOptions}</select>
-      <input type="submit" value="Submit!" />
-    <form>
-    <hr />
-    <a href="/tasks">list</a>
+      <input type="submit" value="Update" />
+    </form>
+    <form id="delete_task_form">
+      <button type="submit">Delete</button>
+    </form>
   `;
 
-  const form = document.querySelector("#edit_task_form")!;
-  form.addEventListener("submit", onEditTaskFormSubmit(task));
+  const editForm = document.querySelector("#edit_task_form")!;
+  editForm.addEventListener("submit", onEditTaskFormSubmit(task));
+
+  const deleteForm = document.querySelector("#delete_task_form")!;
+  deleteForm.addEventListener("submit", onDeleteTaskFormSubmit(task));
 }
 
+const storage = createStorage();
+const root = document.querySelector("#app_root")!;
 bootstrapApp();
