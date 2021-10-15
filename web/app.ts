@@ -255,23 +255,18 @@ function renderTasksListPage(tasks: Task[], games: Game[]): void {
       // TODO: handle missing game
       const game = games.find((game) => game.id === task.gameId)!;
       return `
-        <li>
-          <h3>Task ${task.id}</h3>
-          <div>
-            <a href="/tasks/${task.id}">details</a>
-            <br />
-            <img src="/public/${game.boxArt}" width="100" /><br />
-            gameId: ${game.name} (${game.id})
-            <br />
-            status: ${Statuses[task.status]}
-          </div>
+        <li class="taskItem" style="background-image: url('/public/${game.boxArt}');">
+          <a href="/tasks/${task.id}">
+            <h3 class="taskName">Task #${task.id}</h3>
+            <h4 class="taskStatus">${Statuses[task.status]}</h4>
+          </a>
         </li>
       `;
     })
     .join("\n");
   root.innerHTML = `
-    <a href="/tasks/new">New task</a>
-    <ul>${list}</ul>
+    <a href="/tasks/new" class="button">New task</a>
+    <ul class="taskList">${list}</ul>
   `;
 }
 
@@ -282,14 +277,13 @@ function renderNewTaskPage(games: Game[]): void {
     .map(game => `<option value="${game.id}">${game.name}</option>`)
     .join("\n");
   root.innerHTML = `
-    <a href="/tasks">Back to list</a>
-    <hr />
-    <div>
-      <h1>Create a new task</h1>
+    <a href="/tasks" class="button">Back to list</a>
+    <div class="content">
+      <h1>New task</h1>
       <form id="new_task_form">
         <label for="gameId">Select a game</label>
         <select name="gameId">${options}</select>
-        <input type="submit" value="Create" />
+        <input type="submit" value="Create" class="button" />
       <form>
     </div>
   `;
@@ -299,7 +293,7 @@ function renderNewTaskPage(games: Game[]): void {
 }
 
 function renderTaskDetailsPage(task: Task, games: Game[]) {
-  document.title = `Task details (${task.id})`;
+  document.title = `Task (${task.id})`;
 
   const game = games.find((game) => game.id === task.gameId)!;
   const gameOptions = games
@@ -312,27 +306,27 @@ function renderTaskDetailsPage(task: Task, games: Game[]) {
     .join("\n");
 
   root.innerHTML = `
-    <a href="/tasks">Back to list</a>
-    <hr />
-    <h3>Task ${task.id}</h3>
-    <div>
-      <img src="/public/${game.boxArt}" width="100" />
-      <br />
-      gameId: ${game.name} (${game.id})
-      <br/>
-      status: ${Statuses[task.status]}
+    <a href="/tasks" class="button">Back to list</a>
+    <div class="taskItem" style="background-image: url('/public/${game.boxArt}');">
+      <h1 class="taskName">Task #${task.id}</h1>
     </div>
-    <hr />
-    <form id="edit_task_form">
-      <label for="gameId">Select a game</label>
-      <select name="gameId">${gameOptions}</select>
-      <label for="status">Select a status</label>
-      <select name="status">${statusOptions}</select>
-      <input type="submit" value="Update" />
-    </form>
-    <form id="delete_task_form">
-      <button type="submit">Delete</button>
-    </form>
+    <div class="content">
+      <h2>Edition</h2>
+      <form id="edit_task_form">
+        <div>
+          <label for="gameId">Select a game</label>
+          <select name="gameId">${gameOptions}</select>
+        </div>
+        <div>
+          <label for="status">Select a status</label>
+          <select name="status">${statusOptions}</select>
+        </div>
+        <input type="submit" value="Update" class="button" />
+      </form>
+      <form id="delete_task_form">
+        <button type="submit" class="button danger">Delete</button>
+      </form>
+    </div>
   `;
 
   const editForm = document.querySelector("#edit_task_form")!;

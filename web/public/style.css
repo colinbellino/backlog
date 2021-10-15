@@ -1,0 +1,90 @@
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.taskList {
+  margin: 0;
+  padding: 0;
+}
+
+.taskList .taskItem {
+  position: relative;
+  margin: 0 0 1rem 0;
+  list-style: none;
+}
+
+.taskItem {
+  position: relative;
+  height: 35vw;
+  max-height: 150px;
+  max-width: 400px;
+  background-position: top center;
+  background-size: cover;
+  color: #ffffff;
+}
+
+.taskItem:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.taskItem > * {
+  position: relative;
+}
+
+.taskItem a {
+  display: block;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.taskItem .taskName {
+  margin: 0;
+  padding: 0.5rem 0.5rem 0;
+}
+
+.taskItem .taskStatus {
+  margin: 0;
+  padding: 0.5rem 0.5rem 0;
+}
+
+.content {
+  padding: 0.5rem;
+}
+
+.content h1,
+.content h2,
+.content h3 {
+  margin: 0 0 0.5rem 0;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.5rem 0.8rem;
+  margin: 0.5rem;
+  border: 0;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  background: #4caf50;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.button:hover {
+  background-color: #52c256;
+}
+
+.button.danger {
+  background-color: #e91e63;
+}
+
+.button.danger:hover {
+  background-color: #f83b7a;
+}
