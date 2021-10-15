@@ -6,25 +6,27 @@ enum Statuses {
 
 type Task = {
   id: number;
-  game_id: string;
+  gameId: number;
   status: Statuses;
 };
 
 type Game = {
-  id: string;
-  box_art: string;
+  id: number;
+  name: string;
+  boxArt: string;
 };
 
 type AppStorage = {
   getTasks: () => Promise<Task[]>;
-  getTask: (taskId: Number) => Promise<Task | null>;
-  createTask: (data: { game_id: string }) => Promise<Task>;
+  getTask: (taskId: number) => Promise<Task | null>;
+  createTask: (data: Pick<Task, "gameId">) => Promise<Task>;
+  updateTask: (taskId: number, data: Partial<Task>) => Promise<Task>;
   getGames: () => Promise<Game[]>;
 };
 
 const statuses = [
-  { id: 0, name: "IN_PROGRESS" },
-  { id: 1, name: "TODO" },
+  { id: 0, name: "TODO" },
+  { id: 1, name: "IN_PROGRESS" },
   { id: 2, name: "DONE" },
 ];
 
@@ -32,25 +34,25 @@ function createStorage(): AppStorage {
   const tasks: Task[] = [
     {
       id: 1,
-      game_id: "ZELDA",
+      gameId: 0,
       status: Statuses.TODO,
     },
     {
       id: 2,
-      game_id: "MARIO",
+      gameId: 1,
       status: Statuses.IN_PROGRESS,
     },
     {
       id: 3,
-      game_id: "DARK_SOULS",
+      gameId: 2,
       status: Statuses.DONE,
     },
   ];
 
   const games: Game[] = [
-    { id: "ZELDA", box_art: "278615-legendofzelda1.jpg" },
-    { id: "MARIO", box_art: "2362267-nes_supermariobros.jpg" },
-    { id: "DARK_SOULS", box_art: "2555200-dsclean.jpg" },
+    { id: 0, name: "ZELDA", boxArt: "278615-legendofzelda1.jpg" },
+    { id: 1, name: "MARIO", boxArt: "2362267-nes_supermariobros.jpg" },
+    { id: 2, name: "DARK_SOULS", boxArt: "2555200-dsclean.jpg" },
   ];
 
   const getTasks: AppStorage["getTasks"] = async function () {
@@ -78,7 +80,19 @@ function createStorage(): AppStorage {
     return task;
   };
 
-  return { getTasks, getTask, createTask, getGames };
+  const updateTask: AppStorage["updateTask"] = async function (taskId, data) {
+    const taskIndex = tasks.findIndex(task => task.id === taskId);
+    if (taskIndex == -1) {
+      throw Error("Task not found: " + taskId);
+    }
+
+    const oldTask = tasks[taskIndex]!;
+    tasks[taskIndex] = { ...oldTask, ...data };
+
+    return tasks[taskIndex]!;
+  };
+
+  return { getTasks, getTask, createTask, updateTask, getGames };
 }
 
 const storage = createStorage();
@@ -136,7 +150,7 @@ function renderPage(url: string) {
 async function renderPageForUrl(url: string): Promise<void> {
   if (/^\/tasks\/([0-9]+)$/.test(url)) {
     const result = /^\/tasks\/([0-9]+)$/.exec(url);
-    const id = Number.parseInt(result![1]!);
+    const id = parseInt(result![1]!);
 
     renderLoading();
     return Promise.all([storage.getTask(id), storage.getGames()])
@@ -144,7 +158,7 @@ async function renderPageForUrl(url: string): Promise<void> {
         if (task == null) {
           return Promise.reject(new Error("Task not found"));
         }
-        renderTaskDetails(task, games);
+        renderTaskDetailsPage(task, games);
         return;
       });
   }
@@ -153,12 +167,12 @@ async function renderPageForUrl(url: string): Promise<void> {
     case "/tasks": {
       renderLoading();
       return Promise.all([storage.getTasks(), storage.getGames()])
-        .then(([tasks, games]) => renderTasksList(tasks, games))
+        .then(([tasks, games]) => renderTasksListPage(tasks, games))
     }
     case "/tasks/new": {
       renderLoading();
       return storage.getGames()
-        .then((games) => renderTaskForm(games))
+        .then((games) => renderNewTaskPage(games))
     }
     default: {
       history.pushState({}, "", "/tasks");
@@ -185,7 +199,7 @@ function onNewTaskFormSubmit(this: HTMLFormElement, event: Event) {
 
   const formData = new FormData(this);
   const data = {
-    game_id: formData.get("game_id") as string,
+    gameId: parseInt(formData.get("gameId") as string),
   };
 
   // TODO: Handle createTask errors (display errors to the user or something)
@@ -193,31 +207,49 @@ function onNewTaskFormSubmit(this: HTMLFormElement, event: Event) {
     .then(_task => { history.pushState({}, "", "/tasks") });
 }
 
-function onEditTaskFormSubmit(this: HTMLFormElement, event: Event) {
-  event.preventDefault();
-  event.stopPropagation();
+function onEditTaskFormSubmit(task: Task) {
+  return function listener(this: HTMLFormElement, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
 
-  console.log("FIXME: Make it work! :'(");
+    const formData = new FormData(this);
+    const data: Partial<Task> = {};
+
+    const gameId = parseInt(formData.get("gameId") as string);
+    if (gameId !== task.gameId) {
+      data.gameId = gameId;
+    }
+
+    const status = parseInt(formData.get("status") as string);
+    if (status !== task.status) {
+      data.status = status;
+    }
+
+    storage.updateTask(task.id, data)
+      .then(_task => { history.pushState({}, "", "/tasks") });
+  }
 }
 
-function renderTasksList(tasks: Task[], games: Game[]): void {
+function renderTasksListPage(tasks: Task[], games: Game[]): void {
   document.title = "Tasks";
 
   const list = tasks
     .map((task) => {
       // TODO: handle missing game
-      const game = games.find((game) => game.id === task.game_id)!;
+      const game = games.find((game) => game.id === task.gameId)!;
       return `
         <li>
-          <h3>${game.id}</h3>
+          <h3>Task ${task.id}</h3>
           <div>
             <a href="/tasks/${task.id}">details</a>
             <br />
-            <img src="/public/${game.box_art}" width="100" /><br />
-            id: ${task.id}<br/>
+            <img src="/public/${game.boxArt}" width="100" /><br />
+            gameId: ${game.name} (${game.id})
+            <br />
             status: ${Statuses[task.status]}
           </div>
-        </li>`;
+        </li>
+      `;
     })
     .join("\n");
   root.innerHTML = `
@@ -226,18 +258,18 @@ function renderTasksList(tasks: Task[], games: Game[]): void {
   `;
 }
 
-function renderTaskForm(games: Game[]): void {
+function renderNewTaskPage(games: Game[]): void {
   document.title = "New task";
 
   const options = games
-    .map(game => `<option value="${game.id}">${game.id}</option>`)
+    .map(game => `<option value="${game.id}">${game.name}</option>`)
     .join("\n");
   root.innerHTML = `
     <div>
       <h1>Create a new task</h1>
       <form id="new_task_form">
-        <label for="game_id">Select a game</label>
-        <select name="game_id">${options}</select>
+        <label for="gameId">Select a game</label>
+        <select name="gameId">${options}</select>
         <input type="submit" value="Submit!" />
       <form>
     </div>
@@ -247,12 +279,12 @@ function renderTaskForm(games: Game[]): void {
   form.addEventListener("submit", onNewTaskFormSubmit);
 }
 
-function renderTaskDetails(task: Task, games: Game[]) {
+function renderTaskDetailsPage(task: Task, games: Game[]) {
   document.title = `Task details (${task.id})`;
 
-  const game = games.find((game) => game.id === task.game_id)!;
+  const game = games.find((game) => game.id === task.gameId)!;
   const gameOptions = games
-    .map(game => `<option value="${game.id}" ${game.id === task.game_id ? "selected" : ""}>${game.id}</option>`)
+    .map(game => `<option value="${game.id}" ${game.id === task.gameId ? "selected" : ""}>${game.name}</option>`)
     .join("\n");
   const statusOptions = statuses
     .map((status) => {
@@ -261,27 +293,28 @@ function renderTaskDetails(task: Task, games: Game[]) {
     .join("\n");
 
   const details = `
-    <h3>${game.id}</h3>
+    <h3>Task ${task.id}</h3>
     <div>
-      <img src="/public/${game.box_art}" width="100" /><br />
-      id: ${task.id}<br/>
+      <img src="/public/${game.boxArt}" width="100" /><br />
+      gameId: ${game.name} (${game.id})<br/>
       status: ${Statuses[task.status]}
     </div>
   `;
   root.innerHTML = `${details}
     <hr />
     <form id="edit_task_form">
-      <label for="game_id">Select a game</label>
-      <select name="game_id">${gameOptions}</select>
+      <label for="gameId">Select a game</label>
+      <select name="gameId">${gameOptions}</select>
       <label for="status">Select a status</label>
       <select name="status">${statusOptions}</select>
       <input type="submit" value="Submit!" />
     <form>
     <hr />
-    <a href="/tasks">list</a>`;
+    <a href="/tasks">list</a>
+  `;
 
   const form = document.querySelector("#edit_task_form")!;
-  form.addEventListener("submit", onEditTaskFormSubmit);
+  form.addEventListener("submit", onEditTaskFormSubmit(task));
 }
 
 bootstrapApp();
