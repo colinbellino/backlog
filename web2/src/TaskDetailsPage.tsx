@@ -21,10 +21,12 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
       storage.getGames(),
     ])
       .then(([task, games]) => {
-        document.title = `Task #${task!.id}`;
+        if (task != null) {
+          document.title = `Task #${task.id}`;
+          setGame(games.find((game) => game.id === task.gameId));
+        }
         setTask(task);
         setGames(games);
-        setGame(games.find((game) => game.id === task!.gameId));
       })
       .catch(console.error)
       .finally(() => {
