@@ -10,7 +10,7 @@ export type Game = {
   boxArt: string;
 };
 
-type AppStorage = {
+export type AppStorage = {
   getTasks: () => Promise<Task[]>;
   getTask: (taskId: number) => Promise<Task | null>;
   createTask: (data: Pick<Task, "gameId">) => Promise<Task>;

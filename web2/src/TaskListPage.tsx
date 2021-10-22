@@ -1,25 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { createStorage, Task, Game, statuses } from "./storage";
+import { Task, Game, statuses, AppStorage } from "./storage";
 
-const storage = createStorage();
+type TaskListPageProps = {
+  storage: AppStorage;
+};
 
-function TaskListPage() {
-  // TODO:
-  // - Set document.title = "Tasks"
-  // - Link to "new task"
-  // - List of tasks
-  //   - Task image
-  //   - Task name
-  //   - Task status
-  //   - Task link
-
+export function TaskListPage({ storage }: TaskListPageProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = "Tasks";
     Promise.all([storage.getTasks(), storage.getGames()])
       .then(([tasks, games]) => {
         setTasks(tasks);
@@ -29,7 +23,7 @@ function TaskListPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
@@ -57,5 +51,3 @@ function TaskListPage() {
     </div>
   );
 }
-
-export default TaskListPage;
