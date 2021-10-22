@@ -27,10 +27,9 @@ export function TaskListPage({ storage }: TaskListPageProps) {
 
   return (
     <div>
-      {loading ?
-        <div>Loading...</div> :
+      <Link to="/tasks/new" className="button">New task</Link>
+      {loading ? null : (
         <div>
-          <Link to="/tasks/new" className="button">New task</Link>
           <ul className="taskList">
             {tasks.map(task => {
               const game = games.find((game) => game.id === task.gameId)!;
@@ -47,7 +46,7 @@ export function TaskListPage({ storage }: TaskListPageProps) {
             })}
           </ul>
         </div>
-      }
+      )}
     </div>
   );
 }

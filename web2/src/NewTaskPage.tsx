@@ -41,8 +41,7 @@ export function NewTaskPage({ storage }: NewTaskPageProps) {
   return (
     <div>
       <Link to="/tasks" className="button">Back to list</Link>
-      {loading ?
-        <div>Loading...</div> :
+      {loading ? null : (
         <div className="content">
           <h1>New task</h1>
           <form id="new_task_form" onSubmit={onSubmit}>
@@ -53,7 +52,7 @@ export function NewTaskPage({ storage }: NewTaskPageProps) {
             <input type="submit" value="Create" className="button" />
           </form>
         </div>
-      }
+      )}
     </div>
   );
 }

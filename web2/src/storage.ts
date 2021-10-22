@@ -50,6 +50,10 @@ export function createStorage(): AppStorage {
     { id: 2, name: "DARK_SOULS", boxArt: "2555200-dsclean.jpg" },
   ];
 
+  // function sleep(delay: number) {
+  //   return new Promise(resolve => setTimeout(resolve, delay));
+  // }
+
   const getTasks: AppStorage["getTasks"] = async function () {
     return tasks;
   };

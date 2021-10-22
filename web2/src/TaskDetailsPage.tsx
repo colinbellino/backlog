@@ -70,8 +70,7 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
   return (
     <div>
       <Link to="/tasks" className="button">Back to list</Link>
-      {loading ?
-        <div>Loading...</div> :
+      {loading ? null : (
         <div>
           <div className="taskItem" style={{ backgroundImage: `url('/${game!.boxArt}')` }}>
             <h1 className="taskName">Task #{task!.id}</h1>
@@ -98,7 +97,7 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
             </form>
           </div>
         </div>
-      }
+      )}
     </div>
   );
 }
