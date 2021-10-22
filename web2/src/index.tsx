@@ -6,6 +6,7 @@ import { BrowserRouter, Switch, Route, Redirect } from "react-router-dom";
 import { createStorage } from "./storage";
 import { TaskListPage } from './TaskListPage';
 import { NewTaskPage } from './NewTaskPage';
+import { TaskDetailsPage } from './TaskDetailsPage';
 import './index.css';
 
 const storage = createStorage();
@@ -22,6 +23,9 @@ ReactDOM.render(
         </Route>
         <Route exact path="/tasks/new">
           <NewTaskPage storage={storage} />
+        </Route>
+        <Route exact path="/tasks/:taskId">
+          <TaskDetailsPage storage={storage} />
         </Route>
         <Route path="*">
           <h1>Page not found</h1>
