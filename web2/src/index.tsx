@@ -1,12 +1,26 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import TaskListPage from './TaskListPage';
+import { BrowserRouter, Switch, Route } from "react-router-dom";
+
 // import reportWebVitals from './reportWebVitals';
+import TaskListPage from './TaskListPage';
 import './index.css';
 
 ReactDOM.render(
   <React.StrictMode>
-    <TaskListPage />
+    <BrowserRouter>
+      <Switch>
+        <Route exact path="/">
+          <TaskListPage />
+        </Route>
+        <Route exact path="/tasks/new">
+          new task
+        </Route>
+        <Route path="*">
+          <h1>Page not found</h1>
+        </Route>
+      </Switch>
+    </BrowserRouter>
   </React.StrictMode>,
   document.getElementById('root')
 );

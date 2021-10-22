@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
 import { createStorage, Task, Game, statuses } from "./storage";
 
 const storage = createStorage();
@@ -34,7 +36,7 @@ function TaskListPage() {
       {loading ?
         <div>Loading...</div> :
         <div>
-          <a href="/tasks/new" className="button">New task</a>
+          <Link to="/tasks/new" className="button">New task</Link>
           <ul className="taskList">
             {tasks.map(task => {
               const game = games.find((game) => game.id === task.gameId)!;
@@ -42,10 +44,10 @@ function TaskListPage() {
 
               return (
                 <li key={task.id} className="taskItem" style={{ backgroundImage: `url('/${game.boxArt}')` }}>
-                  <a href={`/tasks/${task.id}`}>
+                  <Link to={`/tasks/${task.id}`}>
                     <h3 className="taskName">Task #{task.id}</h3>
                     <h4 className="taskStatus">{status.name}</h4>
-                  </a>
+                  </Link>
                 </li>
               );
             })}
