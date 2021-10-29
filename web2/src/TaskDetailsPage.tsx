@@ -67,6 +67,21 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
       .then(() => { history.push("/tasks") });
   }
 
+  function onSubTaskCreate(event: React.MouseEvent<HTMLInputElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const updatedTask = { ...task! };
+    if (updatedTask.subTasks === undefined) {
+      updatedTask!.subTasks = [];
+    }
+    const lastSubTask = updatedTask.subTasks[updatedTask.subTasks.length - 1]!;
+
+    updatedTask!.subTasks.push({ id: lastSubTask.id + 1, content: "", done: false, priority: 0 });
+
+    setTask(updatedTask);
+  }
+
   if (loading === false && task === null) {
     return <Redirect to="/404" />;
   }
@@ -94,6 +109,17 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
                   {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
                 </select>
               </div>
+              <input type="button" value="Add subTask" onClick={onSubTaskCreate} />
+              <ul>
+                {task!.subTasks === undefined ? null : (
+                  [...task!.subTasks].sort((a, b) => b.priority - a.priority).map(subTask => (
+                    <li key={subTask.id}>
+                      <input type="checkbox" defaultChecked={subTask.done} />
+                      <input type="text" defaultValue={subTask.content} /> (id: {subTask.id})
+                    </li>
+                  ))
+                )}
+              </ul>
               <input type="submit" value="Update" className="button" />
             </form>
             <form id="delete_task_form" onSubmit={onDelete}>

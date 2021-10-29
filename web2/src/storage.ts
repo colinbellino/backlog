@@ -2,6 +2,14 @@ export type Task = {
   id: number;
   gameId: number;
   status: number;
+  subTasks?: SubTask[];
+};
+
+export type SubTask = {
+  id: number;
+  content: string;
+  done: boolean;
+  priority: number;
 };
 
 export type Game = {
@@ -41,6 +49,11 @@ export function createStorage(): AppStorage {
       id: 3,
       gameId: 2,
       status: 2,
+      subTasks: [
+        { id: 1, content: "Finish Solaire questline.", done: true, priority: 0 },
+        { id: 2, content: "Find a weapon to replace the Broadsword.", done: false, priority: 2 },
+        { id: 3, content: "Defeat Nito.", done: false, priority: 1 },
+      ]
     },
   ];
 
