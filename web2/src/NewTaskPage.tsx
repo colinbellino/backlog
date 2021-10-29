@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { unstable_batchedUpdates } from "react-dom";
 import { Link, useHistory } from "react-router-dom";
 
 import { AppStorage, Game } from "./storage";
@@ -16,10 +17,13 @@ export function NewTaskPage({ storage }: NewTaskPageProps) {
     document.title = "New task";
     storage.getGames()
       .then((games) => {
-        setGames(games);
+        unstable_batchedUpdates(() => {
+          setGames(games);
+          setLoading(false);
+        });
       })
-      .catch(console.error)
-      .finally(() => {
+      .catch((error) => {
+        console.error(error);
         setLoading(false);
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

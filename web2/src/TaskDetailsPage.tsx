@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { unstable_batchedUpdates } from "react-dom";
 import { Link, Redirect, useHistory, useParams } from "react-router-dom";
 
 import { AppStorage, Game, Task, statuses } from "./storage";
@@ -21,15 +22,18 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
       storage.getGames(),
     ])
       .then(([task, games]) => {
-        if (task != null) {
-          document.title = `Task #${task.id}`;
-          setGame(games.find((game) => game.id === task.gameId));
-        }
-        setTask(task);
-        setGames(games);
+        unstable_batchedUpdates(() => {
+          if (task != null) {
+            document.title = `Task #${task.id}`;
+            setGame(games.find((game) => game.id === task.gameId));
+          }
+          setTask(task);
+          setGames(games);
+          setLoading(false);
+        });
       })
-      .catch(console.error)
-      .finally(() => {
+      .catch((error) => {
+        console.error(error);
         setLoading(false);
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

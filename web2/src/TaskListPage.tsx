@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { unstable_batchedUpdates } from "react-dom";
 import { Link } from "react-router-dom";
 
 import { Task, Game, statuses, AppStorage } from "./storage";
@@ -16,20 +17,28 @@ export function TaskListPage({ storage }: TaskListPageProps) {
     document.title = "Tasks";
     Promise.all([storage.getTasks(), storage.getGames()])
       .then(([tasks, games]) => {
-        setTasks(tasks);
-        setGames(games);
+        unstable_batchedUpdates(() => {
+          setTasks(tasks);
+          setGames(games);
+          setLoading(false);
+        });
       })
-      .catch(console.error)
-      .finally(() => {
+      .catch((error) => {
+        console.error(error);
         setLoading(false);
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function onClick() {
+    setTasks(tasks);
+    setGames(games);
+  }
 
   return (
     <div>
       <Link to="/tasks/new" className="button">New task</Link>
       {loading ? null : (
-        <div>
+        <div onClick={onClick}>
           <ul className="taskList">
             {tasks.map(task => {
               const game = games.find((game) => game.id === task.gameId)!;
