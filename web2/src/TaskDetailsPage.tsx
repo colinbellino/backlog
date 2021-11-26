@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { unstable_batchedUpdates } from "react-dom";
 import { Link, Redirect, useHistory, useParams } from "react-router-dom";
 
-import { AppStorage, Game, Task, statuses } from "./storage";
+import { AppStorage, Game, Task } from "./storage";
 import { TaskDetails } from "./TaskDetails";
 
 type TaskDetailsPageProps = {
@@ -37,18 +37,14 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function onEdit(task: Task) {
-    storage.updateTask(task.id, task)
-      .then(_task => { history.push("/tasks") });
-  }
-
   function onDelete(task: Task) {
     storage.deleteTask(task.id)
       .then(() => { history.push("/tasks") });
   }
 
-  function onChange(task: Task) {
-    setTask(task);
+  function onTaskChange(task: Task) {
+    storage.updateTask(task.id, task)
+      .then(updatedTask => { setTask(updatedTask); });
   }
 
   if (loading === false && task === null) {
@@ -58,7 +54,7 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
   return (
     <div>
       <Link to="/tasks" className="button">Back to list</Link>
-      {loading ? null : <TaskDetails task={task!} games={games} onUpdateClick={onEdit} onDeleteClick={onDelete} onChange={onChange} />}
+      {loading ? null : <TaskDetails task={task!} games={games} onDeleteClick={onDelete} onTaskChange={onTaskChange} />}
     </div>
   );
 }
