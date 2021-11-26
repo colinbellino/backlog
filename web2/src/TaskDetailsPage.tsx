@@ -42,20 +42,9 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
     event.preventDefault();
     event.stopPropagation();
 
-    const formData = new FormData(event.currentTarget);
-    const data: Partial<Task> = {};
+    console.log({ task });
 
-    const gameId = parseInt(formData.get("gameId") as string);
-    if (gameId !== task!.gameId) {
-      data.gameId = gameId;
-    }
-
-    const status = parseInt(formData.get("status") as string);
-    if (status !== task!.status) {
-      data.status = status;
-    }
-
-    storage.updateTask(task!.id, data)
+    storage.updateTask(task!.id, task!)
       .then(_task => { history.push("/tasks") });
   }
 
@@ -67,6 +56,17 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
       .then(() => { history.push("/tasks") });
   }
 
+  function onGameIdChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const gameId = parseInt(event.target.value);
+    setGame(games.find((game) => game.id === gameId));
+    setTask({ ...task!, gameId });
+  }
+
+  function onStatusChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const status = parseInt(event.target.value);
+    setTask({ ...task!, status });
+  }
+
   function onSubTaskCreate(event: React.MouseEvent<HTMLInputElement>) {
     event.preventDefault();
     event.stopPropagation();
@@ -75,9 +75,14 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
     if (updatedTask.subTasks === undefined) {
       updatedTask!.subTasks = [];
     }
-    const lastSubTask = updatedTask.subTasks[updatedTask.subTasks.length - 1]!;
 
-    updatedTask!.subTasks.push({ id: lastSubTask.id + 1, content: "", done: false, priority: 0 });
+    const lastSubTask = updatedTask.subTasks[updatedTask.subTasks.length - 1];
+    let lastId = 0;
+    if (lastSubTask !== undefined) {
+      lastId = lastSubTask.id + 1;
+    }
+
+    updatedTask.subTasks.push({ id: lastId, content: "", done: false, priority: 0 });
 
     setTask(updatedTask);
   }
@@ -99,13 +104,13 @@ export function TaskDetailsPage({ storage }: TaskDetailsPageProps) {
             <form id="edit_task_form" onSubmit={onEdit}>
               <div>
                 <label htmlFor="gameId">Select a game</label>
-                <select name="gameId" defaultValue={task!.gameId}>
+                <select name="gameId" value={task!.gameId} onChange={onGameIdChange}>
                   {games.map((game) => <option key={game.id} value={game.id}>{game.name}</option>)}
                 </select>
               </div>
               <div>
                 <label htmlFor="status">Select a status</label>
-                <select name="status" defaultValue={task!.status}>
+                <select name="status" value={task!.status} onChange={onStatusChange}>
                   {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
                 </select>
               </div>
